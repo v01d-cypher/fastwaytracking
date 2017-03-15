@@ -16,7 +16,7 @@ class FastwayTracking extends Module {
         parent::__construct();
 
         $this->displayName = $this->l('Fastway Tracking');
-        $this->description = $this->l('Check tracking status and update order. See Track order and update user status. Use by setting up a cron to call "http://yourserver/modules/fastwaytracking/cron.php?secure_key=cron_secure_key_123" every half hour or so.');
+        $this->description = $this->l('Check tracking status and update order. See https://github.com/v01d-cypher/fastwaytracking for more details.');
 
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
 
