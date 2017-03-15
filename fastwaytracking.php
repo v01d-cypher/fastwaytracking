@@ -16,7 +16,7 @@ class FastwayTracking extends Module {
         parent::__construct();
 
         $this->displayName = $this->l('Fastway Tracking');
-        $this->description = $this->l('Check tracking status and update order. See https://github.com/v01d-cypher/fastwaytracking for more details.');
+        $this->description = $this->l('A PrestaShop module to check tracking status of an order and update it accordingly.. See https://github.com/v01d-cypher/fastwaytracking for more details.');
 
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
 
