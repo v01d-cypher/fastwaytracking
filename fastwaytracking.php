@@ -20,6 +20,21 @@ class FastwayTracking extends Module {
 
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
 
+        $this->presta_status = array(
+            'payment' => 2,
+            'processing' => 3,
+            'collected' => 17,
+            'in_transit' => 15,
+            'delivered' => 5
+        );
+
+        $this->fastway_to_presta_status = array(
+            'P' => $this->presta_status['collected'],
+            'T' => $this->presta_status['in_transit'],
+            'D' => $this->presta_status['delivered']
+        );
+
+
     }
 
     public function install() {
@@ -142,7 +157,7 @@ class FastwayTracking extends Module {
         return $helper->generateForm($fields_form);
     }
 
-    public function fastway_status($tracking_number) {
+    public function get_tracking_data($tracking_number, $current_status) {
         $json = file_get_contents('http://api.fastway.org/v2/tracktrace/detail.json?LabelNo=' . $tracking_number . '&api_key=' . Configuration::get('FW_TR_API_KEY'));
         $obj = json_decode($json);
 
@@ -157,6 +172,9 @@ class FastwayTracking extends Module {
                 if ($type == 'D' && $status != 'YES') {
                     return '';
                 }
+                else if ($this->fastway_to_presta_status[$type] == $current_status) {
+                    return '';
+                }
                 else {
                     return $type;
                 }
@@ -166,43 +184,28 @@ class FastwayTracking extends Module {
         return '';
     }
 
-    public function update_status($id, $fastway_status) {
-        $payment = 2;
-        $processing = 3;
-        $collected = 17;
-        $in_transit = 15;
-        $delivered = 5;
-
-        $status_map = array(
-            'P' => $collected,
-            'T' => $in_transit,
-            'D' => $delivered
-        );
-
-
+    public function update_presta_status($id, $fastway_status) {
         $new_history = new OrderHistory();
         $new_history->id_order = $id;
-        $new_history->changeIdOrderState($status_map[$fastway_status], $id, true);
+        $new_history->changeIdOrderState($this->fastway_to_presta_status[$fastway_status], $id, true);
         if($fastway_status != 'P') {
             $new_history->addWithemail(true);
         }
     }
 
     public function update_tracking_status() {
-        $delivered = 5;
-
-        $done_states = array($delivered);
-        $sql = "SELECT id_order, shipping_number FROM " . _DB_PREFIX_ . "orders WHERE shipping_number != '' AND current_state != " . $delivered;
+        $sql = "SELECT id_order, shipping_number, current_state FROM " . _DB_PREFIX_ . "orders WHERE shipping_number != '' AND current_state != " . $this->presta_status['delivered'];
         $res = Db::getInstance()->executeS($sql);
 
         if (count($res) > 0) {
             for($i = 0; $i < count($res); $i++) {
                 $id = (int)$res[$i]['id_order'];
                 $tracking_number = $res[$i]['shipping_number'];
-                $fastway_status = $this->fastway_status($tracking_number);
+                $current_status = (int)$res[$i]['current_state'];
+                $fastway_status = $this->get_tracking_data($tracking_number, $current_status);
 
                 if ($fastway_status != '') {
-                    $this->update_status($id, $fastway_status);
+                    $this->update_presta_status($id, $fastway_status);
                 }
             }
         }
