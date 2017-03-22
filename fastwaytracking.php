@@ -7,7 +7,7 @@ class FastwayTracking extends Module {
     public function __construct() {
         $this->name = 'fastwaytracking';
         $this->tab = 'shipping_logistics';
-        $this->version = '1.0.0';
+        $this->version = '1.0.1';
         $this->author = 'Nevar - v01d@inventati.org';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -23,14 +23,13 @@ class FastwayTracking extends Module {
         $this->presta_status = array(
             'payment' => 2,
             'processing' => 3,
-            'collected' => 17,
-            'in_transit' => 15,
+            'shipped' => 4,
             'delivered' => 5
         );
 
         $this->fastway_to_presta_status = array(
-            'P' => $this->presta_status['collected'],
-            'T' => $this->presta_status['in_transit'],
+            'P' => $this->presta_status['shipped'],
+            'T' => $this->presta_status['shipped'],
             'D' => $this->presta_status['delivered']
         );
 
@@ -188,9 +187,6 @@ class FastwayTracking extends Module {
         $new_history = new OrderHistory();
         $new_history->id_order = $id;
         $new_history->changeIdOrderState($this->fastway_to_presta_status[$fastway_status], $id, true);
-        if($fastway_status != 'P') {
-            $new_history->addWithemail(true);
-        }
     }
 
     public function update_tracking_status() {
